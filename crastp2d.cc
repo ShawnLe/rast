@@ -363,7 +363,7 @@ void State::eval(CRastP2D &env) {
       else
         adiff = angle_diff(ipoint.a, tangle);
       if (adiff > aloose) continue;
-      float err = distance(tmpoint, ipoint.p);
+      float err = rastUtils::distance(tmpoint, ipoint.p);
       if (err > loose) continue;
       if (env.use_lsq) {
         float ud = max(0.0F, err - delta);

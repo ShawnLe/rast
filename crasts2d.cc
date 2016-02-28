@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "misc.h"
-#include "narray.h"
-#include "vec2.h"
+#include "colib/misc.h"
+#include "colib/narray.h"
+#include "colib/vec2.h"
 using namespace colib;
 
 #include "util.h"

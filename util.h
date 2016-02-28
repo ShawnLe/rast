@@ -55,8 +55,13 @@ inline float normangleOf(float a) {
   return a;
 }
 
+/// namespace is created to avoid conflict with std::distance
+namespace rastUtils {
+
 inline float distance(const vec2 &a, const vec2 &b) {
   return (a - b).magnitude();
+}
+
 }
 
 inline float norm(vec2 &v) { return v.magnitude(); }

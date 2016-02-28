@@ -1,4 +1,4 @@
-/* Copyright (c) 1990-1995 by Thomas M. Breuel */
+/* Copyrtsght (c) 1990-1995 by Thomas M. Breuel */
 
 /*
   Simple regression tests for the RAST library.
@@ -8,13 +8,32 @@
   ("regression to the non-working state"), not subtle numerical problems.
 */
 
+
 #include <stdio.h>
 
-#include "misc.h"
-#include "narray.h"
-#include "vec2.h"
-#include "smartptr.h"
+#include "colib/misc.h"
+#include "colib/narray.h"
+#include "colib/vec2.h"
+#include "colib/smartptr.h"
+
+#include "imgio/imgio.h"
+#include "imglib/imglib.h"
+
+// deprecated inclusion
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
+
+#include "opencv2/core/core_c.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc_c.h"
+#include "opencv2/imgproc/imgproc.hpp"
+
+
 using namespace colib;
+using namespace iulib;
+//using namespace cv;
 
 #include "util.h"
 #include "rast.h"
@@ -82,7 +101,7 @@ void test_linesp2d_1() {
     do {
       u = vuniform(0, 0, 512, 512);
       v = vuniform(0, 0, 512, 512);
-    } while (distance(u, v) < 1.0);
+    } while (rastUtils::distance(u, v) < 1.0);
     Segment seg(u, v);
     float tol = 0.1, atol = 1e-4;
     lines->set_tolerance(tol, atol);
@@ -116,7 +135,7 @@ void test_liness2d_1() {
     do {
       u = vuniform(0, 0, 512, 512);
       v = vuniform(0, 0, 512, 512);
-    } while (distance(u, v) < 1.0);
+    } while (rastUtils::distance(u, v) < 1.0);
     Segment seg(u, v);
     float tol = 0.1, atol = 1e-4;
     lines->set_tolerance(tol, atol);
@@ -247,22 +266,99 @@ struct seg2 {
 };
 
 void test_rasts2d_1() {
-  begin_trials("rasts2d_1", 100, 1) {
-    vec2 tr(urand(0.0, 512.0), urand(0.0, 512.0));
-    float alpha = urand(0.0, 2 * M_PI);
+  begin_trials("rasts2d_1", 1, 1) {
+    vec2 tr(urand(0.0, 100.0), urand(0.0, 100.0));  // 512.0
+    float alpha = urand(0.0, M_PI/2);
     float scale = urand(0.95, 1.05);
     vec2 rot = vec2(scale * cos(alpha), scale * sin(alpha));
     int nmodel = 20;
+    
+    // ######## shawn
+    cv::Mat mimg = cv::Mat::zeros(480,640,CV_8UC1);
+    cv::Mat iimg = cv::Mat::zeros(480,640,CV_8UC1);
+    mimg = cv::imread("0.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 3.bmp
+    iimg = cv::Mat::zeros(mimg.rows, mimg.cols, CV_8UC3);
+    //iimg = cv::imread("1.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 4.bmp 
+    //cv::resize(mimg, mimg, cv::Size(), .5, .5);
+    //cv::resize(iimg, iimg, cv::Size(), .5, .5);
+    
+    cv::Mat mEimg, iEimg;
+    cv::Mat mEcimg, iEcimg;
+    
+    cv::Canny(mimg, mEimg, 50, 200, 3);
+    cvtColor(mEimg, mEcimg, CV_GRAY2BGR);
+    //cv::imshow("model edge", mEimg);
+    //cv::waitKey(0);
+    
+    cv::Canny(iimg, iEimg, 50, 200, 3);
+    cvtColor(iEimg, iEcimg, CV_GRAY2BGR);
+    //cv::imshow("image edge", iEimg);
+    //cv::waitKey(0);
+    
+    std::vector<cv::Vec4i> lines;
+    cv::HoughLinesP(mEimg, lines, 1, CV_PI/180/2, 1, 50, 5 );  // minLen = 15
+    for( size_t i = 0; i < lines.size(); i++ )
+    {
+      cv::Vec4i l = lines[i];
+      cv::line( mEcimg, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
+    }
     narray<seg2> model;
-    for (int i = 0; i < nmodel; i++) {
-      vec2 u(urand(-100.0, 100.0), urand(-100.0, 100.0));
-      vec2 v(urand(-100.0, 100.0), urand(-100.0, 100.0));
-      model.push(seg2(u, v));
+    for (int i = 0; i < lines.size(); i++) {
+      //vec2 u(urand(-100.0, 100.0), urand(-100.0, 100.0));
+      //vec2 v(urand(-100.0, 100.0), urand(-100.0, 100.0));
+      vec2 u(urand(0.0, 200.0), urand(0.0, 200.0));
+      vec2 v(urand(0.0, 200.0), urand(0.0, 200.0));
+      //model.push(seg2(u, v));  -> no use random data
+      cv::Vec4i l = lines[i];
+      model.push(seg2(vec2(l[0],l[1]),vec2(l[2],l[3])));
+    }
+    cv::imshow("MODEL edge segment", mEcimg);
+    cv::waitKey(0);
+    
+    cv::HoughLinesP(iEimg, lines, 1, CV_PI/180/2, 1, 15, 5 );
+    for( size_t i = 0; i < lines.size(); i++ )
+    {
+      cv::Vec4i l = lines[i];
+      cv::line( iEcimg, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,0,255), 3, CV_AA);
     }
     narray<seg2> image;
-    for (int i = model.length() - 1; i >= 0; i--) {
-      image.push(model[i].transform(rot, tr));
+//    for (int i = model.length() - 1; i >= 0; i--) {
+    
+    printf("model size= %d; lines length= %d\n",model.total, lines.size());
+    for (int i = 0; i < model.total; i++) {
+      cv::Vec4i l = lines[i];
+      image.push(model[i].transform(rot, tr)); // -> no use random data cv::Vec4i l = lines[i];
+      //image.push(seg2(vec2(l[0],l[1]),vec2(l[2],l[3])));
+      
+      seg2 s = model[i].transform(rot, tr);
+      printf("i=%d u= %0.2f %0.2f; v=%.2f %.2f\n",i,s.u.data[0], s.u.data[1], s.v.data[0], s.v.data[1]);
     }
+    cv::imshow("IMAGE edge segment", iEcimg);
+    cv::waitKey(0);
+    // ######## shawn ends
+    
+    // ######## shawn
+    for (int i = 0; i < image.length(); i++) {
+      seg2 &s = image[i];
+      if ((s.u[0] < 0) || (s.u[0] >= iEcimg.cols)) continue;
+      if ((s.u[1] < 0) || (s.u[1] >= iEcimg.rows)) continue;
+      if ((s.v[0] < 0) || (s.v[0] >= iEcimg.cols)) continue;
+      if ((s.v[1] < 0) || (s.v[1] >= iEcimg.rows)) continue;
+      cv::line(iimg, cv::Point2i(s.u[0],s.u[1]), cv::Point2i(s.v[0],s.v[1]), CV_RGB(255, 0, 0), 3);
+    }
+    for (int i = 0; i < model.length(); i++) {
+      seg2 &s = model[i];
+      if ((s.u[0] < 0) || (s.u[0] >= iEcimg.cols)) continue;
+      if ((s.u[1] < 0) || (s.u[1] >= iEcimg.rows)) continue;
+      if ((s.v[0] < 0) || (s.v[0] >= iEcimg.cols)) continue;
+      if ((s.v[1] < 0) || (s.v[1] >= iEcimg.rows)) continue;
+      cv::line(mimg, cv::Point2i(s.u[0],s.u[1]), cv::Point2i(s.v[0],s.v[1]), CV_RGB(255, 0, 255), 3);
+    }
+    cv::imshow("IMAGE",iimg);
+    cv::imshow("MODEL",mimg);
+    cv::waitKey(0);
+    // ######## shawn ends
+    
     autodel<RastS2D> rast(makeRastS2D());
     for (int i = 0; i < image.length(); i++) {
       seg2 &s = image[i];
@@ -274,18 +370,41 @@ void test_rasts2d_1() {
     }
     rast->set_srange(0.95, 1.05);
     rast->set_arange(0.0, 2 * M_PI);
-    float eps = 1.0, aeps = 0.01;
+    float eps = 5.0, aeps = 0.01; // eps=1; aeps = .01
     rast->set_eps(eps, aeps);
     rast->set_verbose(false);
     rast->set_lsq(true);
     rast->set_tolerance(0.1);
     rast->match();
     assert(rast->nresults() > 0);
-#if 0
+#if 1 
 	printf("test %3d: %8.3f %8.3f %8.3f %8.3f   ---   %8.3f %8.3f %8.3f %8.3f\n",TRIAL,
 	       rast->translation(0,0),rast->translation(0,1),rast->angle(0),rast->scale(0),
 	       tr[0],tr[1],alpha,scale);
+    
+    // display results
+    cv::Mat eimg = cv::Mat::zeros(mimg.rows, mimg.cols, CV_8UC3); // estimated image
+    for (int i = 0; i < model.length(); i++) {
+      
+      vec2 rot = vec2(scale * cos(alpha), scale * sin(alpha));
+      seg2 &s = model[i];
+      //seg2 &s = model[i].transform(rot, tr);  // -> no use random data cv::Vec4i l = lines[i];
+      s = s.transform(rot, tr);  // -> no use random data cv::Vec4i l = lines[i];
+      printf("(%.2f,%.2f) (%.2f,%.2f)\n",s.u[0],s.u[1],s.v[0],s.v[1]);
+      
+      if ((s.u[0] < 0) || (s.u[0] >= mimg.cols)) continue;
+      if ((s.u[1] < 0) || (s.u[1] >= mimg.rows)) continue;
+      if ((s.v[0] < 0) || (s.v[0] >= mimg.cols)) continue;
+      if ((s.v[1] < 0) || (s.v[1] >= mimg.rows)) continue;
+      cv::line(iimg, cv::Point2i(s.u[0],s.u[1]), cv::Point2i(s.v[0],s.v[1]), CV_RGB(255, 0, 255));
+    }
+    cv::imshow("estimated transformation",iimg);
+    cv::waitKey(0);
 #endif
+    
+    printf("transl x = %.2f and target = %.2f\n",rast->translation(0,0), tr[0]); 
+    printf("transl y = %.2f and target = %.2f\n",rast->translation(0,1), tr[1]); 
+    printf("angle alf= %.2f and target = %.2f\n",rast->angle(0), alpha); 
     assert(within(rast->translation(0, 0), tr[0], 2.0 * eps));
     assert(within(rast->translation(0, 1), tr[1], 2.0 * eps));
     assert(within(rast->angle(0), alpha, 2.0 * aeps));
@@ -297,8 +416,8 @@ void test_rasts2d_1() {
 int main(int argc, char **argv) {
   srand48(0);
   test_rasts2d_1();
-  test_rastp2d_2();
-  test_rastp2d_1();
-  test_linesp2d_1();
-  test_liness2d_1();
+  //test_rastp2d_2();
+  //test_rastp2d_1();
+  //test_linesp2d_1();
+  //test_liness2d_1();
 }
