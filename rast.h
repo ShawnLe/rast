@@ -97,6 +97,12 @@ struct InstanceP2D {
 
 InstanceP2D *makeInstanceP2D();
 
+struct CInstanceP2D : InstanceP2D;
+
+/// @author Shawn Le
+/// @date   07/Mar/2016
+CInstanceP2D *makeCInstanceP2D();
+
 // point matching using the RAST algorithm
 
 struct RastP2D {

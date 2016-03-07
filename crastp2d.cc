@@ -52,11 +52,21 @@ struct Region {
   }
   float angle() { return (high(2) + low(2)) / 2.0; }
   float scale() { return (high(3) + low(3)) / 2.0; }
+  
+  /// @return vec2(s * cos(1), s * sin(a))
   vec2 rotation() {
     float a = angle();
     float s = scale();
     return vec2(s * cos(a), s * sin(a));
   }
+  /**
+   * @details
+   * \n original equation: \f$ t^{\delta} = \sqrt{(t^d_x)^2 + (t^d_y)^2} \f$
+   * \n approx. equation:
+   * \n with \f$ t^d = max(t^d_x, t^d_y) \f$ 
+   * \n \f$ \iff t^{\delta} = \sqrt{2}.\sqrt{(t^d)^2}  \f$ 
+   * \n \f$ \iff t^{\delta} = 1.4|t^d|  \f$ 
+   */
   float tdelta() {
     return 1.5 * max((high(0) - low(0)) / 2.0, (high(1) - low(1)) / 2.0);
   }
@@ -313,6 +323,12 @@ struct CRastP2D : RastP2D {
   float scale(int rank) { return results[rank]->region.scale(); }
 };
 
+
+/**
+ * @details
+ * \n loose = \f$ \epsilon + \delta \f$ 
+ * \n delta = delta(tdelta, adelta, sdelta) where tdelta, adelta, sdelta are calculated from region
+ */
 void State::eval(CRastP2D &env) {
   env.n_nodes++;
   MsourceStack &msources = env.msources;

@@ -166,7 +166,8 @@ void test_liness2d_1() {
 void test_rastp2d_1() {
   // bounded error
   begin_trials("rastp2d_1", 1000, 10) {
-    autodel<InstanceP2D> instance(makeInstanceP2D());
+    //autodel<InstanceP2D> instance(makeInstanceP2D());
+    autodel<CInstanceP2D> instance(makeCInstanceP2D());
     autodel<RastP2D> rast(makeRastP2D());
     instance->set_nclutter(0);
     instance->set_nmodel_total(20);
@@ -174,7 +175,8 @@ void test_rastp2d_1() {
     instance->set_error(0.0);
     instance->set_aerror(0.0);
     instance->set_srange(0.5, 2.0);
-    instance->generate();
+    //instance->generate();
+    instance->readInputs();
     float tol = 1e-2;
     float eps = 1.0;
     float aeps = 0.1;

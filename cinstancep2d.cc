@@ -3,10 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <iostream>
+
 
 #include "misc.h"
 #include "narray.h"
 #include "vec2.h"
+
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include "EdgeDetector.hpp"
+
 using namespace colib;
 
 #include "util.h"
@@ -14,6 +22,7 @@ using namespace colib;
 
 namespace lumo_cinstancep2d {
 
+/// a point with angle value
 struct avec {
   vec2 p;
   float a;
@@ -41,9 +50,11 @@ struct CInstanceP2D : InstanceP2D {
   int model_size;
 
   int nclutter;
+  /// number of model points
   int nmodel_total;
   int nmodel_unoccluded;
   float error;
+  /// angle error
   float aerror;
   float minscale;
   float maxscale;
@@ -65,7 +76,9 @@ struct CInstanceP2D : InstanceP2D {
         throw "parameter index out of range";
     }
   }
+  /// model point array 
   narray<Msource> msources;
+  /// image point array
   narray<Ipoint> ipoints;
 
   CInstanceP2D() { init(); }
@@ -80,6 +93,71 @@ struct CInstanceP2D : InstanceP2D {
     aerror = 0.1;
   }
 
+  
+  /**
+   * @author Shawn Le 
+   * @date   07/Mar/2016
+   * @brief  read input data instead of using generated random data
+   */ 
+  int readInputs()
+  {
+    int ret = 0;
+    
+    cv::Mat modelimg, imageimg; 
+    modelimg = cv::imread("model.bmp");
+    if (modelimg.empty())
+    {
+      std::cout << "error! model cannot retrieve" << std::endl;
+      ret = 1;
+      return ret;
+    }
+    
+    imageimg = cv::imread("image.bmp");
+    if (imageimg.empty())
+    {
+      std::cout << "error! image cannot retrieve" << std::endl;
+      ret = 1;
+      return ret;
+    }
+    
+    EdgeDetector ed; 
+    EdgeDetector::EdgeData modelEdDat, imageEdDat;
+    cv::Mat modelEdge, imageEdge;
+    ed.EdgeDetect(modelimg, modelEdDat, modelEdge);
+    ed.EdgeDetect(imageimg, imageEdDat, imageEdge);
+ 
+    // pass inputs to compatible data format
+    msources.clear();
+    ipoints.clear();
+    nmodel_total = modelEdDat.edgePts.size();
+    for (int i = 0; i < nmodel_total; i++) {
+      Msource &m = msources.push();
+      m.p = vec2((float)modelEdDat.edgePts[i].x, (float)modelEdDat.edgePts[i].y);
+      m.a = (float)atan2(modelEdDat.DyArr[i], modelEdDat.DxArr[i]);
+    }
+    for (int i = 0; i < imageEdDat.edgePts.size(); i++) {
+      Ipoint &p = ipoints.push();
+      p.p = vec2((float)imageEdDat.edgePts[i].x, (float)imageEdDat.edgePts[i].y);
+      p.a = (float)atan2(imageEdDat.DyArr[i], imageEdDat.DxArr[i]);
+    }
+        
+    return ret;
+  }
+  
+  
+  /// generate a random test data i.e. model and image
+  /**
+   * @details 
+   * \n 1) model points are randomly created i.e.
+   * \n --> m.p vec2(urand(-model_size, model_size), urand(-model_size, model_size))
+   * \n --> m.a = urand(0.0, 2 * M_PI)
+   * \n 2) projected image points + noise are created 
+   * \n --> p.p = cmul(rotation, msources[i].p) + translation + randomUniformVectorFromCircle(error);
+   * \n --> p.a = msources[i].a + angle + urand(-aerror, aerror);
+   * \n 3) cluttered image points are randomly created
+   * @param[out] msources with msources[i].p and msources[i].a
+   * @param[out] ipoints  with ipoints[i].p and ipoints[i].a
+   */
   void generate() {
     float dx = urand(0.0, image_size);
     float dy = urand(0.0, image_size);
@@ -122,6 +200,7 @@ struct CInstanceP2D : InstanceP2D {
     maxscale = max;
   }
   int nimage() { return ipoints.length(); }
+  /// @param[out] a -> orientation value e.g. angle of the point
   void get_image(float &x, float &y, float &a, int i) {
     x = ipoints[i].p[0];
     y = ipoints[i].p[1];
@@ -138,4 +217,5 @@ struct CInstanceP2D : InstanceP2D {
 };
 }
 
-InstanceP2D *makeInstanceP2D() { return new lumo_cinstancep2d::CInstanceP2D(); }
+InstanceP2D *makeInstanceP2D() { return new lumo_cinstancep2d::InstanceP2D(); }
+CInstanceP2D *makeCInstanceP2D() { return new lumo_cinstancep2d::CInstanceP2D(); }
