@@ -167,7 +167,7 @@ void test_rastp2d_1() {
   // bounded error
   begin_trials("rastp2d_1", 1000, 10) {
     //autodel<InstanceP2D> instance(makeInstanceP2D());
-    autodel<CInstanceP2D> instance(makeCInstanceP2D());
+    autodel<lumo_cinstancep2d::CInstanceP2D> instance(makeCInstanceP2D());
     autodel<RastP2D> rast(makeRastP2D());
     instance->set_nclutter(0);
     instance->set_nmodel_total(20);
@@ -183,7 +183,7 @@ void test_rastp2d_1() {
     rast->set_min_q(0);
     rast->set_tolerance(tol);
     rast->set_srange(0.5, 2.0);
-    assert(instance->nimage() == instance->nmodel());
+    assert(instance->nimage() == instance->nmodel());  // why needs this assertion?? -> No. edge points in image can be different from No. template 
     for (int i = 0; i < instance->nimage(); i++) {
       float x, y, a;
       instance->get_image(x, y, a, i);
@@ -277,8 +277,8 @@ void test_rasts2d_1() {
     
     // ######## shawn
     cv::Mat mimg = cv::Mat::zeros(480,640,CV_8UC1);
-    cv::Mat iimg = cv::Mat::zeros(480,640,CV_8UC1);
-    mimg = cv::imread("0.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 3.bmp
+    cv::Mat iimg = cv::Mat::zeros(480,640,CV_8UC1); 
+    mimg = cv::imread("0.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 3.bmp 
     iimg = cv::Mat::zeros(mimg.rows, mimg.cols, CV_8UC3);
     //iimg = cv::imread("1.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 4.bmp 
     //cv::resize(mimg, mimg, cv::Size(), .5, .5);
@@ -417,9 +417,9 @@ void test_rasts2d_1() {
 
 int main(int argc, char **argv) {
   srand48(0);
-  test_rasts2d_1();
+  //test_rasts2d_1();
   //test_rastp2d_2();
-  //test_rastp2d_1();
+  test_rastp2d_1();
   //test_linesp2d_1();
   //test_liness2d_1();
 }

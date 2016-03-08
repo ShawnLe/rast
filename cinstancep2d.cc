@@ -22,15 +22,6 @@ using namespace colib;
 
 namespace lumo_cinstancep2d {
 
-/// a point with angle value
-struct avec {
-  vec2 p;
-  float a;
-};
-
-typedef avec Msource;
-typedef avec Mpoint;
-typedef avec Ipoint;
 
 inline int urand48() { return abs(int(lrand48())); }
 
@@ -45,24 +36,7 @@ inline int urand48() { return abs(int(lrand48())); }
     }
 #endif
 
-struct CInstanceP2D : InstanceP2D {
-  int image_size;
-  int model_size;
-
-  int nclutter;
-  /// number of model points
-  int nmodel_total;
-  int nmodel_unoccluded;
-  float error;
-  /// angle error
-  float aerror;
-  float minscale;
-  float maxscale;
-
-  vec2 translation;
-  float angle;
-  float scale;
-  float get_param(int i) {
+  float CInstanceP2D::get_param(int i) {
     switch (i) {
       case 0:
         return translation[0];
@@ -76,14 +50,10 @@ struct CInstanceP2D : InstanceP2D {
         throw "parameter index out of range";
     }
   }
-  /// model point array 
-  narray<Msource> msources;
-  /// image point array
-  narray<Ipoint> ipoints;
 
-  CInstanceP2D() { init(); }
+  CInstanceP2D::CInstanceP2D() { init(); }
 
-  void init() {
+  void CInstanceP2D::init() {
     image_size = 512;
     model_size = 100;
     nclutter = igetenv("nclutter", 50);
@@ -99,23 +69,23 @@ struct CInstanceP2D : InstanceP2D {
    * @date   07/Mar/2016
    * @brief  read input data instead of using generated random data
    */ 
-  int readInputs()
+  int CInstanceP2D::readInputs()
   {
     int ret = 0;
     
     cv::Mat modelimg, imageimg; 
-    modelimg = cv::imread("model.bmp");
+    modelimg = cv::imread("model.bmp",CV_LOAD_IMAGE_COLOR);
     if (modelimg.empty())
     {
-      std::cout << "error! model cannot retrieve" << std::endl;
+      std::cout << "error! model.bmp cannot retrieve" << std::endl;
       ret = 1;
       return ret;
     }
     
-    imageimg = cv::imread("image.bmp");
+    imageimg = cv::imread("image.bmp",CV_LOAD_IMAGE_COLOR);
     if (imageimg.empty())
     {
-      std::cout << "error! image cannot retrieve" << std::endl;
+      std::cout << "error! image.bmp cannot retrieve" << std::endl;
       ret = 1;
       return ret;
     }
@@ -158,7 +128,7 @@ struct CInstanceP2D : InstanceP2D {
    * @param[out] msources with msources[i].p and msources[i].a
    * @param[out] ipoints  with ipoints[i].p and ipoints[i].a
    */
-  void generate() {
+  void CInstanceP2D::generate() {
     float dx = urand(0.0, image_size);
     float dy = urand(0.0, image_size);
     translation = vec2(dx, dy);
@@ -188,34 +158,48 @@ struct CInstanceP2D : InstanceP2D {
     shuffle(ipoints);
   }
 
-  void set_image_size(int r) { image_size = r; }
-  void set_model_size(int r) { model_size = r; }
-  void set_nclutter(int v) { nclutter = v; }
-  void set_nmodel_total(int v) { nmodel_total = v; }
-  void set_nmodel_unoccluded(int v) { nmodel_unoccluded = v; }
-  void set_error(float v) { error = v; }
-  void set_aerror(float v) { aerror = v; }
-  void set_srange(float min, float max) {
+  void CInstanceP2D::set_image_size(int r) { image_size = r; }
+  void CInstanceP2D::set_model_size(int r) { model_size = r; }
+  void CInstanceP2D::set_nclutter(int v) { nclutter = v; }
+  void CInstanceP2D::set_nmodel_total(int v) { nmodel_total = v; }
+  void CInstanceP2D::set_nmodel_unoccluded(int v) { nmodel_unoccluded = v; }
+  void CInstanceP2D::set_error(float v) { error = v; }
+  void CInstanceP2D::set_aerror(float v) { aerror = v; }
+  void CInstanceP2D::set_srange(float min, float max) {
     minscale = min;
     maxscale = max;
   }
-  int nimage() { return ipoints.length(); }
+  int CInstanceP2D::nimage() { return ipoints.length(); }
   /// @param[out] a -> orientation value e.g. angle of the point
-  void get_image(float &x, float &y, float &a, int i) {
+  void CInstanceP2D::get_image(float &x, float &y, float &a, int i) {
     x = ipoints[i].p[0];
     y = ipoints[i].p[1];
     a = ipoints[i].a;
   }
-  int nmodel() { return msources.length(); }
-  void get_model(float &x, float &y, float &a, int i) {
+  int CInstanceP2D::nmodel() { return msources.length(); }
+  void CInstanceP2D::get_model(float &x, float &y, float &a, int i) {
     x = msources[i].p[0];
     y = msources[i].p[1];
     a = msources[i].a;
   }
 
-  ~CInstanceP2D() {}
-};
+  CInstanceP2D::~CInstanceP2D() {}
+  
 }
 
-InstanceP2D *makeInstanceP2D() { return new lumo_cinstancep2d::InstanceP2D(); }
-CInstanceP2D *makeCInstanceP2D() { return new lumo_cinstancep2d::CInstanceP2D(); }
+
+//InstanceP2D *makeInstanceP2D() { return new lumo_cinstancep2d::InstanceP2D(); }
+/**
+ * @author  Shawn Le
+ * @details replace his prototype returning a parent class to returning a child class, allowing new implementations of child class can be used.
+ *          This also requires child class's prototype should be moved to header for global calls and uses
+ */
+lumo_cinstancep2d::CInstanceP2D *makeInstanceP2D() { return new lumo_cinstancep2d::CInstanceP2D(); }
+
+/**
+ * @author  Shawn Le
+ * @brief   I create another prototype based on makeInstanceP2D so that new makeCInstanceP2D can return my new class CInstanceP2D  
+ * @details his makeInstanceP2D calls implementation of CInstanceP2D but returns a InstanceP2D which is the parent class and is a virtual class
+ *          it makes new implementations of CInstanceP2D is not acceptable by compiler since they don't exist in the parent class
+ */
+lumo_cinstancep2d::CInstanceP2D *makeCInstanceP2D() { return new lumo_cinstancep2d::CInstanceP2D(); }

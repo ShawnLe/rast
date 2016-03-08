@@ -63,7 +63,7 @@ link_directories(${Boost_LIBRARY_DIR})
 #Files to be compiled
 #--------------------------------------------
 #add_executable( ${project_name} calignmentp2d.cc rast-test.cc crastrs2d.cc crasts2d.cc cliness2d.cc clinesp2d.cc cinstancep2d.cc cedges.cc crastss2d.cc crastp2d.cc rast.cc) 
-add_executable( ${project_name} rast-test.cc crasts2d.cc clinesp2d.cc cliness2d.cc crastp2d.cc cinstancep2d.cc)
+add_executable( ${project_name} rast-test.cc crasts2d.cc clinesp2d.cc cliness2d.cc crastp2d.cc cinstancep2d.cc EdgeDetector.cpp)
 
 
 #Link libraries
