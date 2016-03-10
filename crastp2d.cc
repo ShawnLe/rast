@@ -132,8 +132,14 @@ struct State {
 };
 
 struct CRastP2D : RastP2D {
+  
+  /// provides a mean to relatively compare between different units i.e. different dimensions of the search space
   narray<float> splitscale;
-
+  
+  /**
+   * @brief    check terminate condition that all dimensions are smaller than delta threshold 
+   * @details  v (magnitude of dimension i) = (r.high(i) - r.low(i)) * double(splitscale(i))  
+   */
   bool final(Region &r, float delta) {
     for (int i = 0; i < r.low.length(); i++) {
       float v = (r.high(i) - r.low(i)) * double(splitscale(i));
@@ -142,6 +148,7 @@ struct CRastP2D : RastP2D {
     return true;
   }
 
+  /// @brief split the space at the largest dimension
   void split(Region &left, Region &right, Region &r) {
     int dim = r.low.length();
     int mi = -1;
@@ -188,9 +195,11 @@ struct CRastP2D : RastP2D {
     tolerance = 1e-3;
     min_q = 3.0;
     maxresults = 1;
-    ::set(splitscale, 1.0, 1.0, 500.0, 500.0);
-    ::set(tlow, -1000.0, -1000.0, 0.0, 0.9);
-    ::set(thigh, 1000.0, 1000.0, 2 * M_PI, 1.1);
+    ::set(splitscale, 1.0, 1.0, 50.0, 10.0);
+//    ::set(tlow, -1000.0, -1000.0, 0.0, 0.9);
+    ::set(tlow, -15.0, -15.0, 0.0, 0.95);
+//    ::set(thigh, 1000.0, 1000.0, 2 * M_PI, 1.1);
+    ::set(thigh, 15.0, 15.0, M_PI/4., 1.05);
     generation = 1;
     use_lsq = false;
     unoriented = true;
@@ -207,6 +216,9 @@ struct CRastP2D : RastP2D {
   int n_transforms;
   int n_distances;
 
+  /**
+   * @details the stop condition is (1) top.ubound = top.lbound or (2) "final" is reached 
+   */
   void start_match() {
     n_nodes = 0;
     n_transforms = 0;
@@ -232,7 +244,7 @@ struct CRastP2D : RastP2D {
         queue.insert(top, priority(top));
         continue;
       }
-      if (verbose && iter % 10000 == 0) {
+      if (verbose && iter % 1000 == 0) {  // 10000
         float q = results.length() > 0 ? results[0]->ubound : 0.0;
         fprintf(stderr, "# %10d result %6g queue %7d", iter, q,
                 1 + queue.length());

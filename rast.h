@@ -6,6 +6,7 @@
 #include "vec2.h"
 
 #include "util.h"
+#include "opencv2/highgui/highgui.hpp"
 
 
 // line finding using the RAST algorithm
@@ -145,6 +146,8 @@ namespace lumo_cinstancep2d {
     narray<Msource> msources;
     /// image point array
     narray<Ipoint> ipoints;
+    
+    cv::Mat disp_img;
   
     CInstanceP2D();
   
@@ -155,6 +158,7 @@ namespace lumo_cinstancep2d {
      * @date   07/Mar/2016
      * @brief  read input data instead of using generated random data
      */ 
+    //int readInputs(cv::Mat& img_out);
     int readInputs();
     
     /// generate a random test data i.e. model and image

@@ -142,8 +142,10 @@ static float unoriented_angle_diff(float a1, float a2) {
 }
 
 struct Region {
-  vector<float> low;
-  vector<float> high;
+  //vector<float> low; -> deprecated! use namespace annotation instead
+  rastUtils::vector<float> low;
+  //vector<float> high; -> deprecated! use namespace annotation instead
+  rastUtils::vector<float> high;
   
   /// @brief represents a region of parameters. Translation value of this region i.e. the center of region 
   vec2 translation() {
@@ -231,7 +233,7 @@ struct State {
  * @brief main class for RastS2D but struct is used instead
  */
 struct CRastS2D : RastS2D {
-  vector<float> splitscale;
+  rastUtils::vector<float> splitscale;
 
   bool final(Region &r, float delta) {
     for (int i = 0; i < r.low.length(); i++) {
@@ -275,8 +277,8 @@ struct CRastS2D : RastS2D {
   float tolerance;
   float min_q;
   int maxresults;
-  vector<float> tlow;
-  vector<float> thigh;
+  rastUtils::vector<float> tlow;
+  rastUtils::vector<float> thigh;
   int generation;
   bool use_lsq;
   bool unoriented;

@@ -69,6 +69,7 @@ inline int urand48() { return abs(int(lrand48())); }
    * @date   07/Mar/2016
    * @brief  read input data instead of using generated random data
    */ 
+  //int CInstanceP2D::readInputs(cv::Mat& img_out)
   int CInstanceP2D::readInputs()
   {
     int ret = 0;
@@ -81,6 +82,7 @@ inline int urand48() { return abs(int(lrand48())); }
       ret = 1;
       return ret;
     }
+    cv::resize(modelimg, modelimg, cv::Size(), 0.125, .125); 
     
     imageimg = cv::imread("image.bmp",CV_LOAD_IMAGE_COLOR);
     if (imageimg.empty())
@@ -89,12 +91,18 @@ inline int urand48() { return abs(int(lrand48())); }
       ret = 1;
       return ret;
     }
+    cv::resize(imageimg, imageimg, cv::Size(), 0.125, .125); 
+    imageimg.copyTo(disp_img);
     
     EdgeDetector ed; 
     EdgeDetector::EdgeData modelEdDat, imageEdDat;
     cv::Mat modelEdge, imageEdge;
     ed.EdgeDetect(modelimg, modelEdDat, modelEdge);
     ed.EdgeDetect(imageimg, imageEdDat, imageEdge);
+    
+    cv::imshow("model",modelEdge);
+    cv::imshow("image",imageEdge);
+    cv::waitKey(0);
  
     // pass inputs to compatible data format
     msources.clear();
