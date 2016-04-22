@@ -107,15 +107,21 @@ inline int urand48() { return abs(int(lrand48())); }
     // pass inputs to compatible data format
     msources.clear();
     ipoints.clear();
-    nmodel_total = modelEdDat.edgePts.size();
+    nmodel_total = modelEdDat.edgePtsOrg.size();
+    
+    printf("\n ### number of model's edge points = %d\n",nmodel_total);
+    printf("\n ### number of image's edge points = %d\n",imageEdDat.edgePtsOrg.size());
+    
     for (int i = 0; i < nmodel_total; i++) {
       Msource &m = msources.push();
-      m.p = vec2((float)modelEdDat.edgePts[i].x, (float)modelEdDat.edgePts[i].y);
+      m.p = vec2((float)modelEdDat.edgePtsOrg[i].x, (float)modelEdDat.edgePtsOrg[i].y);
+      //printf("M (%.2f, %.2f) ",m.p[0],m.p[1]);
       m.a = (float)atan2(modelEdDat.DyArr[i], modelEdDat.DxArr[i]);
     }
-    for (int i = 0; i < imageEdDat.edgePts.size(); i++) {
+    for (int i = 0; i < imageEdDat.edgePtsOrg.size(); i++) {
       Ipoint &p = ipoints.push();
-      p.p = vec2((float)imageEdDat.edgePts[i].x, (float)imageEdDat.edgePts[i].y);
+      p.p = vec2((float)imageEdDat.edgePtsOrg[i].x, (float)imageEdDat.edgePtsOrg[i].y);
+      //printf("I (%.2f, %.2f) ",p.p[0],p.p[1]);
       p.a = (float)atan2(imageEdDat.DyArr[i], imageEdDat.DxArr[i]);
     }
         

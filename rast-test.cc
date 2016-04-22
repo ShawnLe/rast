@@ -179,9 +179,9 @@ void test_rastp2d_1() {
     cv::Mat imageimg;
     //instance->readInputs(imageimg);
     instance->readInputs();
-    float tol = 5;  // 1e-2
+    float tol = 1;  // 1e-2
     float eps = 1.0;
-    float aeps = 0.1;
+    float aeps = 0.5;
     rast->set_verbose(true);
     rast->set_min_q(0);
     rast->set_tolerance(tol);
@@ -205,21 +205,38 @@ void test_rastp2d_1() {
     //assert(rast->ubound(0) == instance->nmodel());   
     assert(rast->ubound(0) <= instance->nmodel());   
     
+    /// make sure not too few matches
+    assert(rast->ubound(0) > (float)instance->nmodel()/3*2);   
+    
     // these assertions are pretty heuristic given that it's a bounded error
     // match
-    assert(within(rast->translation(0, 0), instance->get_param(0), 2.0));
-    assert(within(rast->translation(0, 1), instance->get_param(1), 2.0));
-    assert(within(rast->angle(0), instance->get_param(2), 0.07));
-    assert(within(rast->scale(0), instance->get_param(3), 1));
+    // -> in case of real data, these assertions are redundant
+    //assert(within(rast->translation(0, 0), instance->get_param(0), 10.0)); 
+    //assert(within(rast->translation(0, 1), instance->get_param(1), 10.0));
+    //assert(within(rast->angle(0), instance->get_param(2), 0.07));
+    //assert(within(rast->scale(0), instance->get_param(3), 1));
     
     // display result here
-    vec2 transl = vec2(rast->translation(0,0), rast->translation(0,1));
-    float alf = rast->angle(0); 
+    vec2 transl = vec2(rast->translation(0,0), rast->translation(0,1)); // pvec2(0,0); 
+    float alf = rast->angle(0);   //0
     float scale = rast->scale(0); 
+    
+    //vec2 transl = vec2(instance->get_param(0), instance->get_param(1));
+    //float alf = instance->get_param(2); 
+    //float scale = instance->get_param(3); 
+    
     vec2 rot = vec2(scale * cos(alf), scale * sin(alf));
+    
+    printf("Translation: (%.2f, %.2f)\n",transl[0],transl[1]); 
+    printf("Angle: %.2f\n",alf); 
+    printf("Scale: %.2f\n\n",scale); 
+    
     for (int i = 0; i < instance->msources.length(); i++) {
       lumo_cinstancep2d::Ipoint p;
       p.p = cmul(rot, instance->msources[i].p) + transl;
+      //p.p = instance->msources[i].p;
+      
+      //printf("(%.2f, %.2f) ",p.p[0],p.p[1]);
       cv::circle(instance->disp_img, cv::Point2i(p.p[0],p.p[1]), 0, CV_RGB(0, 255, 0), 2, 8); 
     }
     cv::imshow("matched result", instance->disp_img);

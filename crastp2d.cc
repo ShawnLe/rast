@@ -195,7 +195,7 @@ struct CRastP2D : RastP2D {
     tolerance = 1e-3;
     min_q = 3.0;
     maxresults = 1;
-    ::set(splitscale, 1.0, 1.0, 50.0, 10.0);
+    ::set(splitscale, 1.0, 1.0, 700.0, 10.0);
 //    ::set(tlow, -1000.0, -1000.0, 0.0, 0.9);
     ::set(tlow, -15.0, -15.0, 0.0, 0.95);
 //    ::set(thigh, 1000.0, 1000.0, 2 * M_PI, 1.1);
@@ -217,7 +217,8 @@ struct CRastP2D : RastP2D {
   int n_distances;
 
   /**
-   * @details the stop condition is (1) top.ubound = top.lbound or (2) "final" is reached 
+   * @details the stop condition is (1) top.ubound = top.lbound or (2) "final" is reached.
+   *          number matches defined in maxresults 
    */
   void start_match() {
     n_nodes = 0;
