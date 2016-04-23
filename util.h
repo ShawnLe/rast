@@ -323,6 +323,10 @@ struct heap {
 };
 #endif
 
+/**
+ * @brief namespace rastUtils is created to discriminate "vector" used in RAST and std::vector
+ */
+namespace rastUtils {
 template <class T>
 struct vector {
   narray<T> v;
@@ -363,6 +367,7 @@ struct vector {
   void operator=(const vector<T> &source) { copy(v, source.v); }
   void operator=(vector<T> &source) { copy(v, source.v); }
 };
+}
 
 inline int mkseed() {
   int seed = igetenv("seed", -1);

@@ -165,8 +165,9 @@ void test_liness2d_1() {
 
 void test_rastp2d_1() {
   // bounded error
-  begin_trials("rastp2d_1", 1000, 10) {
-    autodel<InstanceP2D> instance(makeInstanceP2D());
+  begin_trials("rastp2d_1", 10, 10) { // 1000
+    //autodel<InstanceP2D> instance(makeInstanceP2D());
+    autodel<lumo_cinstancep2d::CInstanceP2D> instance(makeCInstanceP2D());
     autodel<RastP2D> rast(makeRastP2D());
     instance->set_nclutter(0);
     instance->set_nmodel_total(20);
@@ -174,14 +175,18 @@ void test_rastp2d_1() {
     instance->set_error(0.0);
     instance->set_aerror(0.0);
     instance->set_srange(0.5, 2.0);
-    instance->generate();
-    float tol = 1e-2;
+    //instance->generate();
+    cv::Mat imageimg;
+    //instance->readInputs(imageimg);
+    instance->readInputs();
+    float tol = 1;  // 1e-2
     float eps = 1.0;
-    float aeps = 0.1;
+    float aeps = 0.5;
+    rast->set_verbose(true);
     rast->set_min_q(0);
     rast->set_tolerance(tol);
-    rast->set_srange(0.5, 2.0);
-    assert(instance->nimage() == instance->nmodel());
+    rast->set_srange(0.9, 1.1);
+    //assert(instance->nimage() == instance->nmodel());  // why needs this assertion?? -> No. edge points in image can be different from No. template 
     for (int i = 0; i < instance->nimage(); i++) {
       float x, y, a;
       instance->get_image(x, y, a, i);
@@ -193,14 +198,49 @@ void test_rastp2d_1() {
       rast->add_msource(x, y, a, eps, aeps);
     }
     rast->match();
+    
     assert(rast->nresults() > 0);
-    assert(rast->ubound(0) == instance->nmodel());
+    /// revise following condition for real data 
+    /// if ub > nmodel, it means that wrong matching points are found
+    //assert(rast->ubound(0) == instance->nmodel());   
+    assert(rast->ubound(0) <= instance->nmodel());   
+    
+    /// make sure not too few matches
+    assert(rast->ubound(0) > (float)instance->nmodel()/3*2);   
+    
     // these assertions are pretty heuristic given that it's a bounded error
     // match
-    assert(within(rast->translation(0, 0), instance->get_param(0), 2.0));
-    assert(within(rast->translation(0, 1), instance->get_param(1), 2.0));
-    assert(within(rast->angle(0), instance->get_param(2), 0.07));
-    assert(within(rast->scale(0), instance->get_param(3), 0.05));
+    // -> in case of real data, these assertions are redundant
+    //assert(within(rast->translation(0, 0), instance->get_param(0), 10.0)); 
+    //assert(within(rast->translation(0, 1), instance->get_param(1), 10.0));
+    //assert(within(rast->angle(0), instance->get_param(2), 0.07));
+    //assert(within(rast->scale(0), instance->get_param(3), 1));
+    
+    // display result here
+    vec2 transl = vec2(rast->translation(0,0), rast->translation(0,1)); // pvec2(0,0); 
+    float alf = rast->angle(0);   //0
+    float scale = rast->scale(0); 
+    
+    //vec2 transl = vec2(instance->get_param(0), instance->get_param(1));
+    //float alf = instance->get_param(2); 
+    //float scale = instance->get_param(3); 
+    
+    vec2 rot = vec2(scale * cos(alf), scale * sin(alf));
+    
+    printf("Translation: (%.2f, %.2f)\n",transl[0],transl[1]); 
+    printf("Angle: %.2f\n",alf); 
+    printf("Scale: %.2f\n\n",scale); 
+    
+    for (int i = 0; i < instance->msources.length(); i++) {
+      lumo_cinstancep2d::Ipoint p;
+      p.p = cmul(rot, instance->msources[i].p) + transl;
+      //p.p = instance->msources[i].p;
+      
+      //printf("(%.2f, %.2f) ",p.p[0],p.p[1]);
+      cv::circle(instance->disp_img, cv::Point2i(p.p[0],p.p[1]), 0, CV_RGB(0, 255, 0), 2, 8); 
+    }
+    cv::imshow("matched result", instance->disp_img);
+    cv::waitKey(0);
   }
   end_trials;
 }
@@ -275,8 +315,8 @@ void test_rasts2d_1() {
     
     // ######## shawn
     cv::Mat mimg = cv::Mat::zeros(480,640,CV_8UC1);
-    cv::Mat iimg = cv::Mat::zeros(480,640,CV_8UC1);
-    mimg = cv::imread("0.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 3.bmp
+    cv::Mat iimg = cv::Mat::zeros(480,640,CV_8UC1); 
+    mimg = cv::imread("0.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 3.bmp 
     iimg = cv::Mat::zeros(mimg.rows, mimg.cols, CV_8UC3);
     //iimg = cv::imread("1.bmp",CV_LOAD_IMAGE_GRAYSCALE);   // 4.bmp 
     //cv::resize(mimg, mimg, cv::Size(), .5, .5);
@@ -415,9 +455,9 @@ void test_rasts2d_1() {
 
 int main(int argc, char **argv) {
   srand48(0);
-  test_rasts2d_1();
+  //test_rasts2d_1();
   //test_rastp2d_2();
-  //test_rastp2d_1();
+  test_rastp2d_1();
   //test_linesp2d_1();
   //test_liness2d_1();
 }
